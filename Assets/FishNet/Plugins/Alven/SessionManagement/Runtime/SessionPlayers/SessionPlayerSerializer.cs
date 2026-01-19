@@ -15,7 +15,7 @@ namespace FishNet.Alven.SessionManagement
         {
             int connectionId = reader.ReadInt32();
             int clientPlayerId = reader.ReadInt32();
-            
+
             if (clientPlayerId == SessionPlayer.UNSET_CLIENTID)
             {
                 return SessionPlayer.Empty;

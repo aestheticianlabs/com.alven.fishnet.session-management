@@ -13,7 +13,7 @@ namespace FishNet.Alven.SessionManagement
     [RequireComponent(typeof(NetworkObject))]
     public sealed class NetworkSessionObject : NetworkBehaviour
     {
-        private readonly SyncVar<SessionPlayer> _ownerPlayer = new SyncVar<SessionPlayer>();
+        private readonly SyncVar<SessionPlayer> _ownerPlayer = new SyncVar<SessionPlayer>(SessionPlayer.Empty);
         /// <summary>
         /// Owner SessionPlayer of this object.
         /// </summary>
@@ -110,7 +110,7 @@ namespace FishNet.Alven.SessionManagement
 
         private void OnOwnerPlayerChanged(SessionPlayer prev, SessionPlayer next, bool asServer)
         {
-            if (!NetworkManager.DoubleLogic(asServer) && (IsServerInitialized || next == null || next.IsLocalPlayer))
+            if (!NetworkManager.DoubleLogic(asServer) && (IsServerInitialized || next == null || !next.IsValid || next.IsLocalPlayer))
             {
                 if (prev != null && prev.IsValid)
                 {
@@ -146,7 +146,7 @@ namespace FishNet.Alven.SessionManagement
         {
             if (GivingOwnership) return;
             
-            OwnerPlayer = null;
+            OwnerPlayer = SessionPlayer.Empty;
         }
 
         public override void OnDespawnServer(NetworkConnection connection)

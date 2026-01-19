@@ -47,13 +47,13 @@ namespace FishNet.Alven.SessionManagement
                 else
                 {
                     // This is done to get rid of some of the problems of the initialization order of NetworkConnection and SessionPlayer.
-                    if (NetworkManager.ClientManager.Connection.ClientId == ConnectionId)
+                    if (NetworkManager?.ClientManager.Connection.ClientId == ConnectionId)
                     {
                         _connection = NetworkManager.ClientManager.Connection;
                         return _connection;
                     }
 
-                    if (NetworkManager.ClientManager.Clients.TryGetValue(ConnectionId, out _connection))
+                    if (NetworkManager?.ClientManager.Clients.TryGetValue(ConnectionId, out _connection) ?? false)
                     {
                         return _connection;
                     }
