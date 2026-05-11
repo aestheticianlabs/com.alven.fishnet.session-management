@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using FishNet.Connection;
 using FishNet.Managing;
+using FishNet.Managing.Scened;
 using FishNet.Managing.Server;
 using FishNet.Transporting;
 using UnityEngine;
@@ -44,18 +45,21 @@ namespace FishNet.Alven.SessionManagement
 		private readonly Dictionary<int, SessionPlayer> _playersByConnectionIds = new Dictionary<int, SessionPlayer>();
 
 		private ServerManager _serverManager;
+		private SceneManager _sceneManager;
 		private int _nextClientPlayerId;
 		private bool ShareIds => _serverManager.ShareIds;
 
 		private void Awake()
 		{
 			_serverManager = GetComponent<ServerManager>();
+			_sceneManager = GetComponent<SceneManager>();
 
 			if (!NetworkManager) return;
 
 			NetworkManager.RegisterInstance(this);
 			_serverManager.OnRemoteConnectionState += OnRemoteConnectionState;
 			_serverManager.OnServerConnectionState += OnServerConnectionState;
+			_sceneManager.OnClientPresenceChangeEnd += OnClientPresenceChangeEnd;
 		}
 
 		private void OnDestroy()
@@ -65,6 +69,7 @@ namespace FishNet.Alven.SessionManagement
 
 			_serverManager.OnRemoteConnectionState -= OnRemoteConnectionState;
 			_serverManager.OnServerConnectionState -= OnServerConnectionState;
+			_sceneManager.OnClientPresenceChangeEnd -= OnClientPresenceChangeEnd;
 
 			Reset();
 		}
@@ -152,7 +157,6 @@ namespace FishNet.Alven.SessionManagement
 				BroadcastPlayerConnectionChange(player, PlayerConnectionState.Reconnected, false);
 				BroadcastPlayerConnected(player, true);
 				authenticator.InvokeAuthenticationResult(connection, true);
-				connection.OnLoadedStartScenes += OnConnectionLoadedStartScenes;
 				InvokeOnRemotePlayerConnectionState(player, PlayerConnectionState.Reconnected);
 				return true;
 			}
@@ -162,12 +166,17 @@ namespace FishNet.Alven.SessionManagement
 			return false;
 		}
 
-		private void OnConnectionLoadedStartScenes(NetworkConnection connection, bool asServer)
+		private void OnClientPresenceChangeEnd(ClientPresenceChangeEventArgs args)
 		{
-			if (!asServer) return;
+			if (!args.Added) return;
 
-			foreach (NetworkSessionObject sessionObject in connection.GetSessionPlayer().Objects)
+			var scene = args.Scene;
+			var connection = args.Connection;
+
+			foreach (NetworkSessionObject sessionObject in args.Connection.GetSessionPlayer().Objects)
 			{
+				if (sessionObject.gameObject.scene != scene) continue;
+
 				sessionObject.GivingOwnership = true;
 				sessionObject.GiveOwnership(connection);
 				sessionObject.GivingOwnership = false;
@@ -254,7 +263,6 @@ namespace FishNet.Alven.SessionManagement
 		{
 			if (connection.IsAuthenticated && args.ConnectionState == RemoteConnectionState.Stopped)
 			{
-				connection.OnLoadedStartScenes -= OnConnectionLoadedStartScenes;
 				DisconnectPlayer(GetPlayer(connection), !IsSessionStarted);
 			}
 		}
