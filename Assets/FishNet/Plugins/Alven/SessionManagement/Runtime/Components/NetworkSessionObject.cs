@@ -149,18 +149,6 @@ namespace FishNet.Alven.SessionManagement
             OwnerPlayer = SessionPlayer.Empty;
         }
 
-        public override void OnDespawnServer(NetworkConnection connection)
-        {
-            bool hasOwner = Owner != null && Owner.IsValid && Owner.Objects.Contains(NetworkObject);
-            
-            if (hasOwner && OwnerPlayer != null && OwnerPlayer.IsValid && OwnerPlayer.NetworkConnection == connection)
-            {
-                GivingOwnership = true;
-                RemoveOwnership();
-                GivingOwnership = false;
-            }
-        }
-
         protected override void OnValidate()
         {
             base.OnValidate();
